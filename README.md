@@ -9,21 +9,21 @@ Note that bcon does none of this yet. I'm just writing it down.
 
 You have a config file. Add it to bcon
 
-'''
+```
 bcon add filename name (tag1,tag2, etc)
-'''
+```
 
 then later
 
-'''
+```
 bcon name 
-'''
+```
 
 brings up your favourite editor. Not sure what you need? Search by name or tag. ex.
 
-'''
+```
 bcon search i3
-'''
+```
 
 That's the gist of it. 
 
