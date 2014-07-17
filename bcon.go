@@ -30,10 +30,11 @@ func addEntry() error {
 
 	//check args. needs to be filename, list name, then optionally, a list of tags
 	fileName := flag.Arg(1)
-	//ensure file exists
-	if _, err := os.Stat(fileName); err != nil {
+
+	//ensure file exists 
+	if f, err := os.Stat(fileName); err != nil || f.IsDir() {
     	return BconError{"Could not find file."}
-	}
+	} 
 
 	entryName := flag.Arg(2)
 	//ensure name TODO: here, also check if name is unique
