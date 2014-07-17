@@ -6,7 +6,6 @@ import "os"
 
 var homeDir string = os.Getenv("HOME")
 var listName string = "/.bcon/bcon_files" //eventually, let people config this
-var listFile *os.File
 
 func main() {
 
@@ -24,31 +23,46 @@ func main() {
 		printHelp()
 	default:
 		fmt.Println("Not a valid command, try bcon help.")
-
 	}
 }
 
 func addEntry() error {
 
 	//check args. needs to be filename, list name, then optionally, a list of tags
-	// var fileName = flag.Args(1)
-	// var entryName = flag.Args(2)
-	// var tags = flag.Args(3)
-	var err error
+	fileName := flag.Arg(1)
+	//ensure file exists
+	if _, err := os.Stat(fileName); err != nil {
+    	return BconError{"Could not find file."}
+	}
+
+	entryName := flag.Arg(2)
+	//ensure name TODO: here, also check if name is unique
+	if entryName == "" {
+		return BconError{"Specify a name for the new entry."}
+	}
+	
+	//process tags. TODO: maximum number of tags is 10. Look into expanding this? 
+	tags := make([]string, 10)
+	for x := 0; flag.Arg(x + 3) != "" && x < len(tags); x++ {
+		tags[x] = flag.Arg(x + 3)
+	}
 
 	//open file list for writing (in append mode), if fail, create new file
-	listFile, err = os.OpenFile(homeDir+listName, os.O_RDWR|os.O_APPEND, 0660)
+	listFile, err := os.OpenFile(homeDir+listName, os.O_RDWR|os.O_APPEND, 0660)
 	if err != nil {
 		listFile, err = os.Create(homeDir + listName)
 		checkError(err)
 	}
 	defer listFile.Close()
 
-	if flag.Arg(1) != "" {
-		listFile.WriteString(flag.Arg(1) + " ")
-	} else {
-		return BconError{"No argument to add!"}
+	//write to file!
+	listFile.WriteString(entryName + " " + fileName)
+	for _, v := range(tags){
+		if v != "" {
+			listFile.WriteString(" " + v)
+		}
 	}
+	listFile.WriteString("\n")
 
 	//all good, lets boogie.
 	return nil
@@ -65,7 +79,7 @@ func printHelp() {
 	fmt.Println("bcon commands:\n")
 	fmt.Println("   add (filename, name, [tags])  Adds a file.")
 	fmt.Println("   search (name or tag)          Search the filelist by name or tag.")
-	fmt.Println("   remove (name or tag)          Remove a file from the file list.")
+	fmt.Println("   rvhemove (name or tag)          Remove a file from the file list.")
 	fmt.Println("   help                          Show this text. ")
 }
 
