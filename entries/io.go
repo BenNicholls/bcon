@@ -44,9 +44,11 @@ func WriteFilelist(path string, list BconEntrylist) error {
 	writer := bufio.NewWriter(fileList)
 
 	for _, e := range list.entries {
-		_, err := writer.WriteString(e.Output() + "\n")
-		if err != nil {
-			return err
+		if e.name != "" {
+			_, err := writer.WriteString(e.Output() + "\n")
+			if err != nil {
+				return err
+			}
 		}
 	}
 

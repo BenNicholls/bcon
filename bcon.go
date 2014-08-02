@@ -3,7 +3,10 @@ package main
 import "fmt"
 import "flag"
 import "os"
+import "os/exec"
+import "path/filepath"
 import "github.com/bennicholls/bcon/entries"
+import "github.com/bennicholls/bcon/util"
 
 var homeDir string = os.Getenv("HOME")
 var filelistPath string = "/.bcon/bcon_files" //eventually, let people config this
@@ -28,12 +31,44 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+	case "remove":
+		if (flag.Arg(1) == ""){
+			fmt.Println("Please provide an entry name to remove")
+			break
+		}
+		err := entrylist.Remove(flag.Arg(1))
+		if err != nil {
+			fmt.Println(err)
+		}
 	case "list":
 		entrylist.Print()
 	case "help":
 		printHelp()
+
+	//No command, attempt to launch!
 	default:
-		fmt.Println("Not a valid command, try bcon help.")
+
+		entry, err := entrylist.Get(flag.Arg(0))
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+
+		cmd := exec.Command("nano", entry.Path())
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		err = cmd.Run()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	//cleanup
+	err = entries.WriteFilelist(homeDir+filelistPath, entrylist)
+	if err != nil {
+		fmt.Println("Could not write to file.")
 	}
 }
 
@@ -44,13 +79,15 @@ func addEntry() error {
 
 	//ensure file exists
 	if f, err := os.Stat(fileName); err != nil || f.IsDir() {
-		return BconError{"Could not find file."}
+		return util.BconError{"Could not find file."}
+	} else {
+		fileName, err = filepath.Abs(fileName)
 	}
 
 	entryName := flag.Arg(2)
 	//ensure name exists
 	if entryName == "" {
-		return BconError{"Specify a name for the new entry."}
+		return util.BconError{"Specify a name for the new entry."}
 	}
 
 	//process tags. TODO: maximum number of tags is 10. Look into expanding this?
@@ -59,14 +96,10 @@ func addEntry() error {
 		tags[x] = flag.Arg(x + 3)
 	}
 
-	//add the entry. NOTE: this looks ugly.
-	if dup := entrylist.Add(entryName, fileName, tags); !dup {
-		return BconError{"Entry with name " + entryName + " already exists."}
-	}
-
-	err := entries.WriteFilelist(homeDir+filelistPath, entrylist)
+	//add the entry. 
+	err := entrylist.Add(entryName, fileName, tags)
 	if err != nil {
-		return BconError{err.Error()}
+		return err
 	}
 
 	//all good, lets boogie.
@@ -80,12 +113,4 @@ func printHelp() {
 	fmt.Println("   remove (name)                 Remove a file from the file list.")
 	fmt.Println("   list                          List all recorded files. ")
 	fmt.Println("   help                          Show this text. ")
-}
-
-type BconError struct {
-	what string
-}
-
-func (e BconError) Error() string {
-	return e.what
 }

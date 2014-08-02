@@ -10,7 +10,7 @@ Note that bcon does none of this yet. I'm just writing it down.
 You have a config file. Add it to bcon
 
 ```
-bcon add filename name (tag1,tag2, etc)
+bcon add filename name tag1 tag2 tag3
 ```
 
 then later
@@ -19,13 +19,27 @@ then later
 bcon name 
 ```
 
-brings up your favourite editor. Not sure what you need? Search by name or tag. ex.
+brings up your favourite editor (currently hardset to be nano. Who doesn't like nano?). 
+
+The full implemented list of commands can be found with 
+
+```
+bcon help
+```
+
+##FUTURE:
+Not sure what you need? Search by name or tag. ex.
 
 ```
 bcon search i3
 ```
 
-That's the gist of it. 
+##FURTHER FUTURE:
+
+bcon will track your changes and store diffs. commands will be added to allow you to easily revert configs to a previous point in time.
+
+
+That's the gist of it. Let me know if it breaks everything, there's still lots of work to do.
 
 
 
