@@ -53,4 +53,4 @@ func WriteFilelist(path string, list BconEntrylist) error {
 	writer.Flush()
 
 	return nil
-} 
+}
