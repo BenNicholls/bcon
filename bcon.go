@@ -3,10 +3,10 @@ package main
 import "fmt"
 import "flag"
 import "os"
-import "github.com/bennicholls/bcon/filelist"
+import "github.com/bennicholls/bcon/entries"
 
 var homeDir string = os.Getenv("HOME")
-var listFileName string = "/.bcon/bcon_files" //eventually, let people config this
+var filelistPath string = "/.bcon/bcon_files" //eventually, let people config this
 
 func main() {
 
@@ -38,7 +38,7 @@ func addEntry() error {
 	} 
 
 	entryName := flag.Arg(2)
-	//ensure name TODO: here, also check if name is unique
+	//ensure name exists
 	if entryName == "" {
 		return BconError{"Specify a name for the new entry."}
 	}
@@ -50,10 +50,16 @@ func addEntry() error {
 	}
 
 	//open and parse the file list. if it does not exist, create a blank one
-	entries, _ := filelist.ParseFilelist(homeDir + listFileName)
+	entrylist, err := entries.ParseFilelist(homeDir + filelistPath)
+	if err != nil {
+		return BconError{err.Error()}
+	}
 
-	for _, e := range entries {
-		fmt.Println(e.Output())
+	entrylist.Add(entryName, fileName, tags)
+
+	err = entries.WriteFilelist(homeDir + filelistPath, entrylist)
+	if err != nil {
+		return BconError{err.Error()}
 	}
 
 	//all good, lets boogie.
