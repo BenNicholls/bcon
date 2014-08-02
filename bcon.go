@@ -12,9 +12,10 @@ var entrylist entries.BconEntrylist
 func main() {
 
 	flag.Parse()
+	var err error
 
 	//grab the file list.
-	entrylist, err := entries.ParseFilelist(homeDir + filelistPath)
+	entrylist, err = entries.ParseFilelist(homeDir + filelistPath)
 	if err != nil {
 		fmt.Println(err)
 	}

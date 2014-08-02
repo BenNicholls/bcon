@@ -40,6 +40,7 @@ func (list *BconEntrylist) Add(name string, path string, tags []string) bool {
 	}
 
 	i := len(list.entries)
+	fmt.Println(i)
 	list.entries = list.entries[0 : i+1]
 	list.entries[i].name = name
 	list.entries[i].fileName = path
