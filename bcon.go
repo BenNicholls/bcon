@@ -3,9 +3,10 @@ package main
 import "fmt"
 import "flag"
 import "os"
+import "github.com/bennicholls/bcon/filelist"
 
 var homeDir string = os.Getenv("HOME")
-var listName string = "/.bcon/bcon_files" //eventually, let people config this
+var listFileName string = "/.bcon/bcon_files" //eventually, let people config this
 
 func main() {
 
@@ -48,39 +49,22 @@ func addEntry() error {
 		tags[x] = flag.Arg(x + 3)
 	}
 
-	//open file list for writing (in append mode), if fail, create new file
-	listFile, err := os.OpenFile(homeDir+listName, os.O_RDWR|os.O_APPEND, 0660)
-	if err != nil {
-		listFile, err = os.Create(homeDir + listName)
-		checkError(err)
-	}
-	defer listFile.Close()
+	//open and parse the file list. if it does not exist, create a blank one
+	entries, _ := filelist.ParseFilelist(homeDir + listFileName)
 
-	//write to file!
-	listFile.WriteString(entryName + " " + fileName)
-	for _, v := range(tags){
-		if v != "" {
-			listFile.WriteString(" " + v)
-		}
+	for _, e := range entries {
+		fmt.Println(e.Output())
 	}
-	listFile.WriteString("\n")
 
 	//all good, lets boogie.
 	return nil
-}
-
-func checkError(e error) {
-	if e != nil {
-		fmt.Println(e)
-		panic(e)
-	}
 }
 
 func printHelp() {
 	fmt.Println("bcon commands:\n")
 	fmt.Println("   add (filename, name, [tags])  Adds a file.")
 	fmt.Println("   search (name or tag)          Search the filelist by name or tag.")
-	fmt.Println("   rvhemove (name or tag)          Remove a file from the file list.")
+	fmt.Println("   remove (name or tag)          Remove a file from the file list.")
 	fmt.Println("   help                          Show this text. ")
 }
 
