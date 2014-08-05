@@ -44,6 +44,8 @@ func main() {
 		entrylist.Print()
 	case "help":
 		printHelp()
+	case "":
+		fmt.Println("Try \"bcon help\" maybe!")
 
 	//No command, attempt to launch!
 	default:
