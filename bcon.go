@@ -5,22 +5,32 @@ import "flag"
 import "os"
 import "os/exec"
 import "path/filepath"
+import "strings"
 import "github.com/bennicholls/bcon/entries"
 import "github.com/bennicholls/bcon/util"
 
-var homeDir string = os.Getenv("HOME")
+var homeDir string 
 var filelistPath string = "/.bcon/bcon_files" //eventually, let people config this
 var entrylist entries.BconEntrylist
 
 func main() {
 
 	flag.Parse()
+
+	//check if command was called from sudo, ensure we can find our files
+	if sudoUser := os.Getenv("SUDO_USER"); sudoUser == "" {
+		homeDir = os.Getenv("HOME")
+	} else {
+		homeDir = "/home/" + sudoUser
+	}
+
 	var err error
 
 	//grab the file list.
 	entrylist, err = entries.ParseFilelist(homeDir + filelistPath)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	//process verbs (add, remove, etc)
@@ -56,6 +66,7 @@ func main() {
 			break
 		}
 
+		fmt.Println(entry.Path())
 		cmd := exec.Command("nano", entry.Path())
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -84,6 +95,8 @@ func addEntry() error {
 		return util.BconError{"Could not find file."}
 	} else {
 		fileName, err = filepath.Abs(fileName)
+		fileName = strings.Replace(fileName, " ", "\\ ", -1) //ensure spaces are still escaped
+		fmt.Println(fileName)
 	}
 
 	entryName := flag.Arg(2)

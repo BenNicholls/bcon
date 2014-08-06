@@ -45,6 +45,14 @@ func (list *BconEntrylist) Add(name string, path string, tags []string) error {
 		}
 	}
 
+	//check for disallowed names (bcon commands, reserved keywords for bcon config files, etc.)
+	disallowed := [...]string{"add", "remove", "bcon", "list", "help"}
+	for _, v := range disallowed {
+		if name == v {
+			return util.BconError{"Name " + " not allowed (probably is a bcon command.)"}
+		}
+	}
+
 	i := len(list.entries)
 	list.entries = list.entries[0 : i+1]
 	list.entries[i].name = name

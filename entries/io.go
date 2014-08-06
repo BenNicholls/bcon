@@ -34,7 +34,17 @@ func ParseFilelist(filePath string) (BconEntrylist, error) {
 	scanner := bufio.NewScanner(listFile)
 	for scanner.Scan() {
 		tokens := strings.Split(scanner.Text(), " ")
-		list.Add(tokens[0], tokens[1], tokens[2:])
+		pathName := tokens[1]
+
+
+		for i := 1; ; i++ {
+			if strings.HasSuffix(tokens[i], "\\") {
+				pathName += " " + tokens[i + 1]
+			} else {
+				list.Add(tokens[0], pathName, tokens[i + 1:])
+				break
+			}
+		}
 	}
 
 	return list, nil
