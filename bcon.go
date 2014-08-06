@@ -129,7 +129,6 @@ func addEntry() error {
 func printHelp() {
 	fmt.Println("bcon commands:\n")
 	fmt.Println("   add (filename, name, [tags])  Adds a file.")
-	fmt.Println("   search (name or tag)          Search the filelist by name or tag.")
 	fmt.Println("   remove (name)                 Remove a file from the file list.")
 	fmt.Println("   list                          List all recorded files. ")
 	fmt.Println("   help                          Show this text. ")

@@ -6,7 +6,6 @@ import "io/ioutil"
 import "gopkg.in/yaml.v1"
 
 //Parse the file list. If there is no filelist, it makes a blank one.
-//TODO: actually throw some errors
 func ParseFilelist(filePath string) (BconEntrylist, error) {
 
 	//entries NOTE: is 50 too much as a default capacity? too small? who can say

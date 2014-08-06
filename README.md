@@ -27,14 +27,21 @@ The full implemented list of commands can be found with
 bcon help
 ```
 
+Not sure what you need? You can grep the entries bcon has recorded
+
+```
+bcon list | grep search-term
+```
+
 ##FUTURE:
-Not sure what you need? Search by name or tag. ex.
+
+bcon will have a config file where you can config things, invoked comedically with 
 
 ```
-bcon search i3
+bcon myself
 ```
 
-##FURTHER FUTURE:
+...or something.
 
 bcon will track your changes and store diffs. commands will be added to allow you to easily revert configs to a previous point in time.
 
