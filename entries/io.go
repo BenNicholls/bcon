@@ -2,48 +2,38 @@ package entries
 
 import "os"
 import "path"
-import "bufio"
-import "strings"
+import "io/ioutil"
+import "gopkg.in/yaml.v1"
 
 //Parse the file list. If there is no filelist, it makes a blank one.
 //TODO: actually throw some errors
 func ParseFilelist(filePath string) (BconEntrylist, error) {
 
 	//entries NOTE: is 50 too much as a default capacity? too small? who can say
-	list := BconEntrylist{make([]BconEntry, 0, 50)}
+	list := BconEntrylist{make([]BconEntry, 0, 50), false}
 
-	listFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_APPEND, 0660)
-	if err != nil {
-		//NOTE: this just assumes the error indicates that the file doesn't
-		//exist. Really, this should be checked I guess.
+	//check if file exists
+	if f, err := os.Stat(filePath); err != nil || f.IsDir() {
 
-		//if the directory doesn't exist, create it.
+		//If directory doesn't exist, create it
 		err = os.MkdirAll(path.Dir(filePath), 0700)
 		if err != nil {
 			return list, err
 		}
 
-		listFile, err = os.Create(filePath)
+		_, err = os.Create(filePath)
 		if err != nil {
 			return list, err
 		}
-	}
-	defer listFile.Close()
+	} else {
 
-	//parsing happens here. TODO: validate tokens, parse spaces in paths
-	scanner := bufio.NewScanner(listFile)
-	for scanner.Scan() {
-		tokens := strings.Split(scanner.Text(), " ")
-		pathName := tokens[1]
-
-
-		for i := 1; ; i++ {
-			if strings.HasSuffix(tokens[i], "\\") {
-				pathName += " " + tokens[i + 1]
-			} else {
-				list.Add(tokens[0], pathName, tokens[i + 1:])
-				break
-			}
+		listBytes, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return list, err
+		}
+		err = yaml.Unmarshal(listBytes, &list)
+		if err != nil {
+			return list, err
 		}
 	}
 
@@ -53,24 +43,15 @@ func ParseFilelist(filePath string) (BconEntrylist, error) {
 //Writes the entries to the filelist. path is a full pathname.
 func WriteFilelist(path string, list BconEntrylist) error {
 
-	fileList, err := os.Create(path)
+	listBytes, err := yaml.Marshal(&list)
 	if err != nil {
 		return err
 	}
-	defer fileList.Close()
 
-	writer := bufio.NewWriter(fileList)
-
-	for _, e := range list.entries {
-		if e.name != "" {
-			_, err := writer.WriteString(e.Output() + "\n")
-			if err != nil {
-				return err
-			}
-		}
+	err = ioutil.WriteFile(path, listBytes, 0660)
+	if err != nil {
+		return err
 	}
-
-	writer.Flush()
 
 	return nil
 }

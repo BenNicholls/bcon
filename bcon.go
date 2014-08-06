@@ -9,7 +9,7 @@ import "strings"
 import "github.com/bennicholls/bcon/entries"
 import "github.com/bennicholls/bcon/util"
 
-var homeDir string 
+var homeDir string
 var filelistPath string = "/.bcon/bcon_files" //eventually, let people config this
 var entrylist entries.BconEntrylist
 
@@ -42,7 +42,7 @@ func main() {
 			fmt.Println(err)
 		}
 	case "remove":
-		if (flag.Arg(1) == ""){
+		if flag.Arg(1) == "" {
 			fmt.Println("Please provide an entry name to remove")
 			break
 		}
@@ -79,45 +79,50 @@ func main() {
 	}
 
 	//cleanup
-	err = entries.WriteFilelist(homeDir+filelistPath, entrylist)
-	if err != nil {
-		fmt.Println("Could not write to file.")
+	if entrylist.IsDirty() {
+		err = entries.WriteFilelist(homeDir+filelistPath, entrylist)
+		if err != nil {
+			fmt.Println("Could not write to file.")
+		}
 	}
 }
 
 func addEntry() error {
 
 	//check args. needs to be filename, list name, then optionally, a list of tags
-	fileName := flag.Arg(1)
+	argIndex := 1 //Tracks how many arguments the pathname took, used to offset other arguments
+	fileName := flag.Arg(argIndex)
+
+	for ; strings.HasSuffix(flag.Arg(argIndex), "\\"); argIndex++ {
+		fileName += " " + flag.Arg(argIndex+1)
+	}
 
 	//ensure file exists
 	if f, err := os.Stat(fileName); err != nil || f.IsDir() {
 		return util.BconError{"Could not find file."}
 	} else {
 		fileName, err = filepath.Abs(fileName)
-		fileName = strings.Replace(fileName, " ", "\\ ", -1) //ensure spaces are still escaped
-		fmt.Println(fileName)
 	}
 
-	entryName := flag.Arg(2)
+	entryName := flag.Arg(argIndex + 1)
 	//ensure name exists
 	if entryName == "" {
 		return util.BconError{"Specify a name for the new entry."}
 	}
 
 	//process tags. TODO: maximum number of tags is 10. Look into expanding this?
-	tags := make([]string, 10)
-	for x := 0; flag.Arg(x+3) != "" && x < len(tags); x++ {
-		tags[x] = flag.Arg(x + 3)
+	tags := make([]string, 0, 10)
+	for x := 0; flag.Arg(x+argIndex+2) != "" && x < cap(tags); x++ {
+		tags = tags[0 : x+1]
+		tags[x] = flag.Arg(x + argIndex + 2)
 	}
 
-	//add the entry. 
+	//add the entry.
 	err := entrylist.Add(entryName, fileName, tags)
 	if err != nil {
 		return err
 	}
 
-	//all good, lets boogie.
 	return nil
 }
 
