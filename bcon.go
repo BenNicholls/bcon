@@ -4,30 +4,21 @@ import "fmt"
 import "flag"
 import "os"
 import "os/exec"
+import "os/user"
+import "path"
 import "path/filepath"
 import "strings"
 import "github.com/bennicholls/bcon/entries"
 import "github.com/bennicholls/bcon/util"
 
-var homeDir string
 var filelistPath string = "/.bcon/bcon_files" //eventually, let people config this
 var entrylist entries.BconEntrylist
+var bconUser *user.User
 
 func main() {
 
 	flag.Parse()
-
-	//check if command was called from sudo, ensure we can find our files
-	if sudoUser := os.Getenv("SUDO_USER"); sudoUser == "" {
-		homeDir = os.Getenv("HOME")
-	} else {
-		homeDir = "/home/" + sudoUser
-	}
-
-	var err error
-
-	//grab the file list.
-	entrylist, err = entries.ParseFilelist(homeDir + filelistPath)
+	err := initialize()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -80,11 +71,59 @@ func main() {
 
 	//cleanup
 	if entrylist.IsDirty() {
-		err = entries.WriteFilelist(homeDir+filelistPath, entrylist)
+		err = entries.WriteFilelist(bconUser.HomeDir + filelistPath, entrylist)
 		if err != nil {
-			fmt.Println("Could not write to file.")
+			fmt.Println("Could not write to file: " + err.Error())
 		}
 	}
+}
+
+func initialize() error {
+
+	var err error
+	sudo := false
+	//find current user. if command was called from sudo, ensure we can find our files
+	if sudoUser := os.Getenv("SUDO_USER"); sudoUser == "" {
+		bconUser, err = user.Current()
+	} else {
+		bconUser, _ = user.Lookup(sudoUser)
+		sudo = true
+	}
+
+	//check if entry file exists
+	if f, err := os.Stat(bconUser.HomeDir + filelistPath); err != nil || f.IsDir() {
+
+		//If directory doesn't exist, create it. 
+		err = os.MkdirAll(path.Dir(bconUser.HomeDir + filelistPath), 0755)
+		if err != nil {
+			return err
+		}	
+
+		_, err = os.Create(bconUser.HomeDir + filelistPath)
+		if err != nil {
+			return err
+		}
+
+		//if bcon was called from sudo, ensure folder/file has right owner
+		if sudo {
+			cmd := exec.Command("chown", "-R", bconUser.Username + ":" + bconUser.Username, ".bcon")
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err = cmd.Run()
+			if err != nil {
+				return err
+			}
+		}	
+	}
+
+	//grab the file list.
+	entrylist, err = entries.ParseFilelist(bconUser.HomeDir + filelistPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func addEntry() error {

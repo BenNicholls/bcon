@@ -1,7 +1,5 @@
 package entries
 
-import "os"
-import "path"
 import "io/ioutil"
 import "gopkg.in/yaml.v1"
 
@@ -11,30 +9,15 @@ func ParseFilelist(filePath string) (BconEntrylist, error) {
 	//entries NOTE: is 50 too much as a default capacity? too small? who can say
 	list := BconEntrylist{make([]BconEntry, 0, 50), false}
 
-	//check if file exists
-	if f, err := os.Stat(filePath); err != nil || f.IsDir() {
-
-		//If directory doesn't exist, create it
-		err = os.MkdirAll(path.Dir(filePath), 0700)
-		if err != nil {
-			return list, err
-		}
-
-		_, err = os.Create(filePath)
-		if err != nil {
-			return list, err
-		}
-	} else {
-
-		listBytes, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			return list, err
-		}
-		err = yaml.Unmarshal(listBytes, &list)
-		if err != nil {
-			return list, err
-		}
+	listBytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return list, err
 	}
+	err = yaml.Unmarshal(listBytes, &list)
+	if err != nil {
+		return list, err
+	}
+
 
 	return list, nil
 }
