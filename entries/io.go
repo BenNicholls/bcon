@@ -18,7 +18,6 @@ func ParseFilelist(filePath string) (BconEntrylist, error) {
 		return list, err
 	}
 
-
 	return list, nil
 }
 

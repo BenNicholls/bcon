@@ -1,15 +1,17 @@
 package main
 
-import "fmt"
-import "flag"
-import "os"
-import "os/exec"
-import "os/user"
-import "path"
-import "path/filepath"
-import "strings"
-import "github.com/bennicholls/bcon/entries"
-import "github.com/bennicholls/bcon/util"
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"github.com/bennicholls/bcon/entries"
+	"os"
+	"os/exec"
+	"os/user"
+	"path"
+	"path/filepath"
+	"strings"
+)
 
 var filelistPath string = "/.bcon/bcon_files" //eventually, let people config this
 var entrylist entries.BconEntrylist
@@ -58,7 +60,11 @@ func main() {
 		}
 
 		fmt.Println(entry.Path())
-		cmd := exec.Command("nano", entry.Path())
+		editor := os.Getenv("EDITOR")
+		if editor == "" {
+			editor = "nano"
+		}
+		cmd := exec.Command(editor, entry.Path())
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -71,7 +77,7 @@ func main() {
 
 	//cleanup
 	if entrylist.IsDirty() {
-		err = entries.WriteFilelist(bconUser.HomeDir + filelistPath, entrylist)
+		err = entries.WriteFilelist(bconUser.HomeDir+filelistPath, entrylist)
 		if err != nil {
 			fmt.Println("Could not write to file: " + err.Error())
 		}
@@ -93,11 +99,11 @@ func initialize() error {
 	//check if entry file exists
 	if f, err := os.Stat(bconUser.HomeDir + filelistPath); err != nil || f.IsDir() {
 
-		//If directory doesn't exist, create it. 
-		err = os.MkdirAll(path.Dir(bconUser.HomeDir + filelistPath), 0755)
+		//If directory doesn't exist, create it.
+		err = os.MkdirAll(path.Dir(bconUser.HomeDir+filelistPath), 0755)
 		if err != nil {
 			return err
-		}	
+		}
 
 		_, err = os.Create(bconUser.HomeDir + filelistPath)
 		if err != nil {
@@ -106,7 +112,7 @@ func initialize() error {
 
 		//if bcon was called from sudo, ensure folder/file has right owner
 		if sudo {
-			cmd := exec.Command("chown", "-R", bconUser.Username + ":" + bconUser.Username, ".bcon")
+			cmd := exec.Command("chown", "-R", bconUser.Username+":"+bconUser.Username, ".bcon")
 			cmd.Stdin = os.Stdin
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -114,7 +120,7 @@ func initialize() error {
 			if err != nil {
 				return err
 			}
-		}	
+		}
 	}
 
 	//grab the file list.
@@ -138,7 +144,7 @@ func addEntry() error {
 
 	//ensure file exists
 	if f, err := os.Stat(fileName); err != nil || f.IsDir() {
-		return util.BconError{"Could not find file."}
+		return errors.New("Could not find file.")
 	} else {
 		fileName, err = filepath.Abs(fileName)
 	}
@@ -146,7 +152,7 @@ func addEntry() error {
 	entryName := flag.Arg(argIndex + 1)
 	//ensure name exists
 	if entryName == "" {
-		return util.BconError{"Specify a name for the new entry."}
+		return errors.New("Specify a name for the new entry.")
 	}
 
 	//process tags. TODO: maximum number of tags is 10. Look into expanding this?
@@ -168,7 +174,7 @@ func addEntry() error {
 func printHelp() {
 	fmt.Println("bcon commands:\n")
 	fmt.Println("   add (filename, name, [tags])  Adds a file.")
-	fmt.Println("   remove (name)                 Remove a file from the file list.")
+	fmt.Println("   remove (name)                 Remove an entry from the list.")
 	fmt.Println("   list                          List all recorded files. ")
 	fmt.Println("   help                          Show this text. ")
 }

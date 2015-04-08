@@ -1,8 +1,7 @@
 package entries
 
 import "fmt"
-import "github.com/bennicholls/bcon/util"
-
+import "errors"
 //Struct for an entry. Fields are exported so they can be marshaled (see go-yaml)
 type BconEntry struct {
 	Name     string
@@ -47,15 +46,18 @@ func (list *BconEntrylist) Add(name string, path string, tags []string) error {
 	//check for duplicates NOTE: should list.Entries be a map? this would be easier.
 	for _, e := range list.Entries {
 		if e.Name == name {
-			return util.BconError{"Entry with name " + name + " already exists."}
+			return errors.New("Entry with name " + name + " already exists.") 
 		}
 	}
 
 	//check for disallowed names (bcon commands, reserved keywords for bcon config files, etc.)
-	disallowed := [...]string{"add", "remove", "bcon", "list", "help"}
+	
+
+
+disallowed := [...]string{"add", "remove", "bcon", "list", "help"}
 	for _, v := range disallowed {
 		if name == v {
-			return util.BconError{"Name " + name + " not allowed (probably is a bcon command.)"}
+			return errors.New("Name " + name + " not allowed (probably is a bcon command.)")
 		}
 	}
 
@@ -79,7 +81,7 @@ func (list *BconEntrylist) Remove(name string) error {
 		}
 	}
 
-	return util.BconError{"No item called \"" + name + "\""}
+	return errors.New("No item called \"" + name + "\"")
 }
 
 func (list BconEntrylist) IsDirty() bool {
@@ -93,5 +95,5 @@ func (list BconEntrylist) Get(name string) (BconEntry, error) {
 		}
 	}
 
-	return BconEntry{}, util.BconError{"No entry with name \"" + name + "\""}
+	return BconEntry{}, errors.New("No entry with name \"" + name + "\"")
 }
