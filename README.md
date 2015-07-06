@@ -5,8 +5,6 @@ If you're like me, you are too forgetful or too lazy to remember where all your 
 
 ##Usage
 
-Note that bcon does none of this yet. I'm just writing it down.
-
 You have a config file. Add it to bcon
 
 ```
@@ -19,7 +17,7 @@ then later
 bcon name 
 ```
 
-brings up your favourite editor (currently hardset to be nano. Who doesn't like nano?). 
+brings up your favourite editor (uses your $EDITOR, defaults to nano otherwise. Who doesn't like nano?). 
 
 The full implemented list of commands can be found with 
 
@@ -30,7 +28,7 @@ bcon help
 Not sure what you need? You can grep the entries bcon has recorded
 
 ```
-bcon list | grep search-term
+bcon list | grep your-search-term
 ```
 
 ##FUTURE:
